@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.1.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.1.xsd 
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-3.1.xsd 
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-3.1.xsd 
+	http://www.springframework.org/schema/mvc 
+	http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
+
+	<!-- 扫描@Controller注解的类 -->
+	<context:component-scan base-package="com.ruipengkj.**.controller.**" />
+	
+	<mvc:interceptors>
+		<!-- 响应耗时 -->
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<bean class="com.ruipengkj.common.web.interceptor.ElapsedTimeInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+	<!-- aop -->
+	<!-- json 乱码 -->
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<bean
+					class="org.springframework.http.converter.StringHttpMessageConverter">
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/plain;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
+			</list>
+		</property>
+		<!-- 必须将<mvc:annotation-driven />描述放在其下  -->
+		<property name="webBindingInitializer">
+			<bean class="com.ruipengkj.common.web.support.CustomerBinding" />
+		</property>
+	</bean>
+	
+	<!-- <mvc:annotation-driven /> 
+	是一种简写形式，完全可以手动配置替代这种简写形式，简写形式可以让初学都快速应用默认配置方案。
+	会自动注册DefaultAnnotationHandlerMapping与AnnotationMethodHandlerAdapter两个bean,是spring MVC为@Controllers分发请求所必须的。 
+	并提供了：数据绑定支持，@NumberFormatannotation支持，@DateTimeFormat支持，@Valid支持，读写XML的支持（JAXB），读写JSON的支持（Jackson）。 -->
+	<mvc:annotation-driven />
+	
+	<!-- 视图解释类 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver" p:prefix="/WEB-INF/views/" p:suffix=".jsp" />
+	<!-- exception -->
+	<bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="defaultErrorView">
+			<value>error_system</value>
+		</property>
+		<property name="exceptionMappings">
+			<props>
+				<prop key="java.sql.SQLException">error_database</prop><!-- 数据库异常 -->
+				<prop key="org.springframework.web.bind.ServletRequestBindingException">error_system</prop><!-- 参数绑定异常 -->
+				<prop key="java.lang.IllegalArgumentException">error_system</prop><!-- 非法参数异常 -->
+				<prop key="org.springframework.validation.BindException">error_system</prop><!-- 参数类型异常 -->
+				<prop key="java.lang.RuntimeException">error_system</prop><!-- 运行时异常 -->
+				<prop key="java.lang.Exception">error_system</prop><!-- 异常 -->
+			</props>
+		</property>
+	</bean>
+	<!-- 上传文件大小限制 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="2000000" />
+	</bean>
+</beans>

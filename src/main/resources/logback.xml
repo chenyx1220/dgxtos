@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 根节点<configuration>包含的属性： 
+	scan: 		当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true。 
+	scanPeriod: 设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性生效。默认的时间间隔为1分钟。 
+	debug: 		当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。 -->
+<configuration debug="false" scan="false">
+	<property name="logbase" value="/var/log/" />
+	<!-- 定义控制台输出格式 -->
+	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm} [%thread] %-5level %logger{50} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- 定义输出到文件 -->
+	<appender name="file"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${logbase}logFile.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+
+	<!-- 过滤日志作用 -->
+	<!-- 将org.apache.commons.httpclient包下面的所有日志级别设为了WARN -->
+	<logger name="org.apache.commons.httpclient" level="WARN" />
+	<logger name="org.apache.http.wire" level="WARN" />
+
+	<logger name="org.springframework.core" level="WARN" />
+	<logger name="org.springframework.beans" level="WARN" />
+	<logger name="org.springframework.context" level="WARN" />
+	<logger name="org.springframework.cache" level="WARN" />
+	<logger name="org.springframework.test" level="WARN" />
+	<logger name="org.springframework.aop" level="WARN" />
+	<logger name="org.springframework.jndi" level="WARN" />
+	<logger name="org.springframework.jdbc" level="WARN" />
+	
+	<logger name="org.springframework.web.context.support" level="WARN" />
+	<logger name="org.springframework.web" level="WARN" />
+	
+	<logger name="org.springframework.security.config" level="WARN" />
+	<logger name="org.springframework.security.web" level="WARN" />
+
+	<logger name="org.logicalcobwebs.proxool" level="WARN" />
+	<logger name="net.sf.ehcache" level="WARN" />
+	
+	<!-- root 默认日志配置 -->
+	<root level="INFO">
+		<appender-ref ref="stdout" />
+		<appender-ref ref="file" />
+	</root>
+</configuration>
