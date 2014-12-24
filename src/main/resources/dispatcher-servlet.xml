@@ -42,7 +42,7 @@
 		</property>
 		<!-- 必须将<mvc:annotation-driven />描述放在其下  -->
 		<property name="webBindingInitializer">
-			<bean class="com.ruipengkj.common.web.support.CustomerBinding" />
+			<bean class="com.ruipengkj.common.web.support.CustomBinding" />
 		</property>
 	</bean>
 	
