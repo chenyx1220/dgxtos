@@ -95,9 +95,11 @@ create table tos_call_record
    table_no             varchar(8) not null comment '枱号',
    call_code            varchar(255) not null comment '呼叫类型',
    content              varchar(1024) comment '呼叫内容',
+   state                int comment '处理状态',
    create_time          datetime default CURRENT_TIMESTAMP comment '创建时间',
    primary key (id)
 );
+
 
 /*==============================================================*/
 /* Table: tos_dinner_table                                      */
