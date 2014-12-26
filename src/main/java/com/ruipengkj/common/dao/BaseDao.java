@@ -20,7 +20,7 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object> int update(T entry);
+	<T extends Object> int update(T entry, Condition condition);
 
 	/**
 	 * 条件删除
@@ -29,7 +29,7 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object> int delete(T entry);
+	<T extends Object> int delete(T entry, Condition condition);
 	
 	/**
 	 * 主键删除
@@ -38,7 +38,7 @@ public interface BaseDao {
 	 * @param id
 	 * @return
 	 */
-	int deleteByPrimaryKey(Object id);
+	<T extends Object> int deleteByPrimaryKey(T entry);
 	
 	/**
 	 * 主键更新
@@ -47,7 +47,7 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object> int updateByPrimaryKey(Object id, T entry);
+	<T extends Object> int updateByPrimaryKey(T entry);
 	
 	/**
 	 * 主键查询
@@ -55,14 +55,14 @@ public interface BaseDao {
 	 * @param clazz
 	 * @return
 	 */
-	<E> E selectByPrimaryKey(Object id, Class<E> clazz);
+	<T extends Object, E> E selectByPrimaryKey(T entry, Class<E> clazz);
 	
 	/**
 	 * 统计数量
 	 * @param entry
 	 * @return
 	 */
-	<T extends Object> int count(T entry);
+	<T extends Object> Integer count(T entry, Condition condition);
 
 	/**
 	 * 查询实体列表
@@ -72,7 +72,7 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object, E> List<E> selectList(T entry, Class<E> clazz);
+	<T extends Object, E> List<E> selectList(T entry, Condition condition, Class<E> clazz);
 
 	/**
 	 * 查询实体
@@ -82,7 +82,7 @@ public interface BaseDao {
 	 * @param objs
 	 * @return
 	 */
-	<T extends Object,E> E selectObject(T entry, Class<E> clazz);
+	<T extends Object,E> E selectObject(T entry, Condition condition, Class<E> clazz);
 
 	/**
 	 * 查询一个Map集合
@@ -91,14 +91,22 @@ public interface BaseDao {
 	 * @param objs
 	 * @return
 	 */
-	<T extends Object> Map<String, ?> selectMap(T entry);
+	<T extends Object> Map<String, ?> selectMap(T entry, Condition condition);
 
 	/**
-	 * 批量操作
+	 * 批量添加操作
 	 * 
 	 * @param sql
 	 * @param objList
 	 */
-	<T extends Object> void batchOperate(T entry, List<?> objList);
+	<T extends Object> void batchInsert(T entry, List<?> objList);
+	
+	/**
+	 * 批量更新操作
+	 * 
+	 * @param sql
+	 * @param objList
+	 */
+	<T extends Object> void batchUpdate(T entry, Condition condition, List<?> objList);
 
 }

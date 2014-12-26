@@ -18,16 +18,15 @@ import com.ruipengkj.common.util.NameUtils;
  *
  */
 public class SqlUtils {
-    private static final Logger LOG = LoggerFactory.getLogger(SqlUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(SqlUtils.class);
 
     /**
      * 构建insert语句
      *
      * @param entity 实体映射对象
-     * @param nameHandler 名称转换处理器
      * @return
      */
-    public static SqlContext buildInsertSql(Object entity) {
+    public static String buildInsert(Object entity) {
     	StringBuilder sql = new StringBuilder("insert into ");
     	
         Class<?> clazz = entity.getClass();
@@ -38,41 +37,41 @@ public class SqlUtils {
         	throw new DaoException("实体类没有注解@Table");
         }
         
-        List<Object> params = new ArrayList<Object>();
-
         //获取属性信息
         PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
-        sql.append("(");
+        if (pds.length == 0) {
+        	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
+        }
+        sql.append('(');
         StringBuilder args = new StringBuilder();
-        args.append("(");
+        args.append('(');
         for (PropertyDescriptor pd : pds) {
             Object value = getReadMethodValue(pd.getReadMethod(), entity);
             if (value == null) {
                 continue;
             }
             sql.append(NameUtils.toUnderlineName(pd.getName()));
-            args.append("?");
-            params.add(value);
-            sql.append(",");
-            args.append(",");
+            sql.append(',');
+            args.append(':');
+            args.append(pd.getName());
+            args.append(',');
         }
         sql.deleteCharAt(sql.length() - 1);
         args.deleteCharAt(args.length() - 1);
-        args.append(")");
-        sql.append(")");
+        args.append(')');
+        sql.append(')');
         sql.append(" values ");
         sql.append(args);
-        return new SqlContext(sql, params);
+        return sql.toString();
     }
 
     /**
      * 构建更新sql
      * 
      * @param entity
-     * @param nameHandler
      * @return
      */
-    public static SqlContext buildUpdateSql(Object entity) {
+    public static String buildUpdate(Object entity, Condition condition) {
     	StringBuilder sql = new StringBuilder();
     	sql.append("update ");
         Class<?> clazz = entity.getClass();
@@ -83,12 +82,12 @@ public class SqlUtils {
         	throw new DaoException("实体类没有注解@Table");
         }
         
-        List<Object> params = new ArrayList<Object>();
         //获取属性信息
         PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
-        
+        if (pds.length == 0) {
+        	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
+        }
         sql.append(" set ");
-        Object primaryValue = null;
         for (PropertyDescriptor pd : pds) {
             Object value = getReadMethodValue(pd.getReadMethod(), entity);
             if (value == null) {
@@ -96,47 +95,180 @@ public class SqlUtils {
             }
             String columnName = NameUtils.toUnderlineName(pd.getName());
             if ("id".equalsIgnoreCase(columnName)) {
-                primaryValue = value;
                 continue;
             }
             sql.append(columnName);
             sql.append(" = ");
-            sql.append("?");
-            params.add(value);
-            sql.append(",");
+            sql.append(':');
+            sql.append(pd.getName());
+            sql.append(',');
         }
         sql.deleteCharAt(sql.length() - 1);
-        sql.append(" where id = ?");
-        params.add(primaryValue);
-        return new SqlContext(sql, params);
+        if (condition != null && condition.getExpressions().size() > 0) {
+        	sql.append(" where ");
+        	List<String> expressions = condition.getConditions();
+        	for (String expression : expressions) {
+        		sql.append(expression);
+        	}
+        } else {
+        	sql.append(" where id = :id");
+        }
+        return sql.toString();
     }
-
+    
     /**
-     * 构建查询条件
+     * 构造删除SQL
+     * @param entity
+     * @param condition
+     * @return
+     */
+    public static String buildDelete(Object entity, Condition condition) {
+    	StringBuilder sql = new StringBuilder();
+    	sql.append("delete from ");
+        Class<?> clazz = entity.getClass();
+        if (clazz.isAnnotationPresent(Table.class)) { 
+			Table table = (Table) clazz.getAnnotation(Table.class); 
+            sql.append(table.tableName()); 
+        } else {
+        	throw new DaoException("实体类没有注解@Table");
+        }
+        if (condition != null && condition.getExpressions().size() > 0) {
+        	sql.append(" where ");
+        	List<String> expressions = condition.getConditions();
+        	for (String expression : expressions) {
+        		sql.append(expression);
+        	}
+        } else {
+        	sql.append(" where id = :id");
+        }
+        return sql.toString();
+    }
+    
+    /**
+     * 构造查询SQL
+     * @param entity
+     * @param condition
+     * @return
+     */
+    public static String buildSelect(Object entity, Condition condition) {
+    	StringBuilder sql = new StringBuilder();
+    	sql.append("select ");
+    	if (condition != null && condition.getFields().size() > 0) {
+    		List<String> fields = condition.getFields();
+    		for (String field : fields) {
+    			sql.append(field);
+    			sql.append(',');
+    		}
+    		sql.deleteCharAt(sql.length() - 1);
+    	} else {
+    		sql.append("*");
+    	}
+    	sql.append(" from ");
+        Class<?> clazz = entity.getClass();
+        if (clazz.isAnnotationPresent(Table.class)) { 
+			Table table = (Table) clazz.getAnnotation(Table.class); 
+            sql.append(table.tableName()); 
+        } else {
+        	throw new DaoException("实体类没有注解@Table");
+        }
+        if (condition != null && condition.getExpressions().size() > 0) {
+        	sql.append(" where ");
+        	List<String> expressions = condition.getConditions();
+        	for (String expression : expressions) {
+        		sql.append(expression);
+        	}
+        } else {
+        	sql.append(" where id = :id");
+        }
+        return sql.toString();
+    }
+    
+    /**
+     * 构建批量insert语句
+     *
+     * @param entity 实体映射对象
+     * @return
+     */
+    public static String buildBatchInsert(Object entity) {
+    	StringBuilder sql = new StringBuilder("insert into ");
+    	
+        Class<?> clazz = entity.getClass();
+        if (clazz.isAnnotationPresent(Table.class)) { 
+			Table table = (Table) clazz.getAnnotation(Table.class); 
+            sql.append(table.tableName()); 
+        } else {
+        	throw new DaoException("实体类没有注解@Table");
+        }
+        
+        //获取属性信息
+        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
+        if (pds.length == 0) {
+        	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
+        }
+        sql.append('(');
+        StringBuilder args = new StringBuilder();
+        args.append('(');
+        for (PropertyDescriptor pd : pds) {
+            sql.append(NameUtils.toUnderlineName(pd.getName()));
+            sql.append(',');
+            args.append(':');
+            args.append(pd.getName());
+            args.append(',');
+        }
+        sql.deleteCharAt(sql.length() - 1);
+        args.deleteCharAt(args.length() - 1);
+        args.append(')');
+        sql.append(')');
+        sql.append(" values ");
+        sql.append(args);
+        return sql.toString();
+    }
+    
+    /**
+     * 构建批量更新sql
      * 
      * @param entity
-     * @param nameHandler
+     * @return
      */
-    public static SqlContext buildQueryCondition(Object entity) {
+    public static String buildBatchUpdate(Object entity, Condition condition) {
+    	StringBuilder sql = new StringBuilder();
+    	sql.append("update ");
+        Class<?> clazz = entity.getClass();
+        if (clazz.isAnnotationPresent(Table.class)) { 
+			Table table = (Table) clazz.getAnnotation(Table.class); 
+            sql.append(table.tableName()); 
+        } else {
+        	throw new DaoException("实体类没有注解@Table");
+        }
+        
         //获取属性信息
-        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(entity.getClass());
-        StringBuilder condition = new StringBuilder();
-        List<Object> params = new ArrayList<Object>();
-        int count = 0;
+        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
+        if (pds.length == 0) {
+        	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
+        }
+        sql.append(" set ");
         for (PropertyDescriptor pd : pds) {
-            Object value = getReadMethodValue(pd.getReadMethod(), entity);
-            if (value == null) {
+            String columnName = NameUtils.toUnderlineName(pd.getName());
+            if ("id".equalsIgnoreCase(columnName)) {
                 continue;
             }
-            if (count > 0) {
-                condition.append(" and ");
-            }
-            condition.append(NameUtils.toUnderlineName(pd.getName()));
-            condition.append(" = ?");
-            params.add(value);
-            count++;
+            sql.append(columnName);
+            sql.append(" = ");
+            sql.append(':');
+            sql.append(pd.getName());
+            sql.append(',');
         }
-        return new SqlContext(condition, params);
+        sql.deleteCharAt(sql.length() - 1);
+        if (condition != null && condition.getExpressions().size() > 0) {
+        	sql.append(" where ");
+        	List<String> expressions = condition.getConditions();
+        	for (String expression : expressions) {
+        		sql.append(expression);
+        	}
+        } else {
+        	sql.append(" where id = :id");
+        }
+        return sql.toString();
     }
 
     /**
@@ -156,7 +288,7 @@ public class SqlUtils {
             }
             return readMethod.invoke(entity);
         } catch (Exception e) {
-            LOG.error("获取属性值失败", e);
+            logger.error("获取属性值失败", e);
             throw new DaoException("获取属性值失败");
         }
     }
