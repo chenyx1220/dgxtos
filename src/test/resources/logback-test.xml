@@ -30,12 +30,12 @@
 	<!-- 过滤日志作用 -->
 	<!-- 将org.apache.commons.httpclient包下面的所有日志级别设为了WARN -->
 	<logger name="org.apache.commons.httpclient" level="WARN" />
+	<logger name="org.apache.commons.beanutils" level="WARN" />
 	<logger name="org.apache.http" level="WARN" />
 	<logger name="org.apache.http.wire" level="WARN" />
 	<logger name="org.apache.http.client.protocol" level="WARN" />
 	<logger name="org.apache.http.headers" level="WARN" />
 	
-
 	<logger name="org.springframework.core" level="WARN" />
 	<logger name="org.springframework.beans" level="WARN" />
 	<logger name="org.springframework.context" level="WARN" />

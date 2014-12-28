@@ -23,7 +23,12 @@
 	http://www.springframework.org/schema/jee 
 	http://www.springframework.org/schema/jee/spring-jee-3.1.xsd">
 	<!-- 扫描package下的注解类 -->
-	<context:component-scan base-package="com.ruipengkj.dgxtos"/>
+	<context:component-scan base-package="com.ruipengkj">
+		<context:include-filter type="regex" expression=".common.*" />
+		<context:include-filter type="regex" expression=".security.*" />
+		<context:include-filter type="regex" expression=".dgxtos.*" />
+	</context:component-scan>
+	
 	<!-- jdbc.properties文件路径 -->
 	<context:property-placeholder location="classpath:jdbc.properties"/>
 	

@@ -11,6 +11,6 @@ public interface PermissionDao extends BaseDao {
 	 * @param roleName
 	 * @return
 	 */
-	List<String> selectAllPermissionByRoleName(String roleName);
+	List<String> selectPermissionsByRoleName(String roleName);
 
 }

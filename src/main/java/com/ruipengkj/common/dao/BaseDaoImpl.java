@@ -1,12 +1,15 @@
 package com.ruipengkj.common.dao;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
 import org.springframework.jdbc.core.simple.ParameterizedBeanPropertyRowMapper;
@@ -21,9 +24,9 @@ public class BaseDaoImpl implements BaseDao {
 	
 	@Autowired
 	NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-
+	
 	@Override
-	public <T extends Object> int insert(T entry) {
+	public <T> int insert(T entry) {
 		KeyHolder keyHolder = new GeneratedKeyHolder();  
 		try {
 			String sql = SqlUtils.buildInsert(entry);
@@ -39,10 +42,10 @@ public class BaseDaoImpl implements BaseDao {
 	}
 
 	@Override
-	public <T extends Object> int update(T entry, Condition condition) {
+	public int update(Condition condition) {
 		try {
-			String sql = SqlUtils.buildUpdate(entry, condition);
-			int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(entry));
+			String sql = SqlUtils.buildUpdate(condition);
+			int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(condition.getEntity()));
 			return count;
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -52,23 +55,10 @@ public class BaseDaoImpl implements BaseDao {
 	}
 	
 	@Override
-	public <T extends Object> int updateByPrimaryKey(T entry) {
+	public int delete(Condition condition) {
 		try {
-			String sql = SqlUtils.buildUpdate(entry, null);
-			int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(entry));
-			return count;
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new DaoException("数据库更新失败", e);
-		}
-		
-	}
-
-	@Override
-	public <T extends Object> int delete(T entry, Condition condition) {
-		try {
-			String sql = SqlUtils.buildDelete(entry, condition);
-			int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(entry));
+			String sql = SqlUtils.buildDelete(condition);
+			int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(condition.getEntity()));
 			return count;
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -76,37 +66,14 @@ public class BaseDaoImpl implements BaseDao {
 		}
 	}
 	
-	@Override
-	public <T extends Object> int deleteByPrimaryKey(T entry) {
-		try {
-			String sql = SqlUtils.buildDelete(entry, null);
-			int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(entry));
-			return count;
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new DaoException("数据库删除失败", e);
-		}
-	}
+
 
 	@Override
-	public <T extends Object, E> E selectByPrimaryKey(T entry, Class<E> clazz) {
-		E object = null;
-		try {
-//			Map<String, Object> entry = new HashMap<String, Object>();
-//			entry.put("id", id);
-			String sql = SqlUtils.buildSelect(entry, null);
-			object = this.namedParameterJdbcTemplate.queryForObject(sql, new BeanPropertySqlParameterSource(entry), ParameterizedBeanPropertyRowMapper.newInstance(clazz));
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new DaoException("数据库PrimaryKey查询对象失败", e);
-		}
-		return object;
-	}
-
-	@Override
-	public <T extends Object, E> List<E> selectList(T entry, Condition condition, Class<E> clazz) {
+	public <E> List<E> selectList(Condition condition, Class<E> clazz) {
 		List<E> list = null;
-		String sql = SqlUtils.buildSelect(entry, condition);
+		Object entry = condition.getEntity();
+		String sql = SqlUtils.buildSelect(condition);
+		logger.debug(sql);
 		try {
 			if (this.decideParam(clazz)) {
 				if (entry == null) {
@@ -120,60 +87,121 @@ public class BaseDaoImpl implements BaseDao {
 				} else {
 					list = this.namedParameterJdbcTemplate.query(sql, new BeanPropertySqlParameterSource(entry), ParameterizedBeanPropertyRowMapper.newInstance(clazz));
 				}
+				
 			}
-		} catch (Exception e) {
+			
+			if (this.decideParam(clazz)) {
+				
+			} else {
+				
+			}
+		} catch (DataAccessException e) {
 			logger.error(e.getMessage());
-			throw new DaoException("数据库查询列表失败", e);
+			Throwable te = e.getCause();
+			if (te instanceof SQLException) {
+				throw new DaoException("数据库查询失败", e);
+			}
 		}
 		return list;
 	}
 	
 
 	@Override
-	public <T extends Object,E> E selectObject(T entry, Condition condition, Class<E> clazz) {
+	public <E> E selectObject(Condition condition, Class<E> clazz) {
 		E object = null;
-		String sql = SqlUtils.buildSelect(entry, condition);
+		String sql = SqlUtils.buildSelect(condition);
+		logger.debug(sql);
 		try {
 			if (this.decideParam(clazz)) {
-				object = this.namedParameterJdbcTemplate.queryForObject(sql, new BeanPropertySqlParameterSource(entry), clazz);
+				object = this.namedParameterJdbcTemplate.queryForObject(sql, new MapSqlParameterSource(condition.getExpressions()), clazz);
 			} else {
-				object = this.namedParameterJdbcTemplate.queryForObject(sql, new BeanPropertySqlParameterSource(entry), ParameterizedBeanPropertyRowMapper.newInstance(clazz));
+				object = this.namedParameterJdbcTemplate.queryForObject(sql, new MapSqlParameterSource(condition.getExpressions()), ParameterizedBeanPropertyRowMapper.newInstance(clazz));
 			}
 			
-		} catch (Exception e) {
+		} catch (DataAccessException e) {
 			logger.error(e.getMessage());
-			throw new DaoException("数据库查询对象失败", e);
+			Throwable te = e.getCause();
+			if (te instanceof SQLException) {
+				throw new DaoException("数据库查询失败", e);
+			}
 		}
 		return object;
 	}
 	
 	@Override
-	public <T extends Object> Integer count(T entry, Condition condition) {
-		Integer count = 0;
-		String sql = SqlUtils.buildSelect(entry, condition);
+	public <E> List<E> selectList(String sql, Class<E> clazz) {
+		logger.debug(sql);
+		List<E> list = null;
 		try {
-			count = this.namedParameterJdbcTemplate.queryForObject(sql, new BeanPropertySqlParameterSource(entry), Integer.class);
-		} catch (Exception e) {
+			if (this.decideParam(clazz)) {
+				list = this.namedParameterJdbcTemplate.getJdbcOperations().queryForList(sql, clazz);
+			} else {
+				list = this.namedParameterJdbcTemplate.getJdbcOperations().query(sql, ParameterizedBeanPropertyRowMapper.newInstance(clazz));
+			}
+		} catch (DataAccessException e) {
 			logger.error(e.getMessage());
-			throw new DaoException("数据库统计数量失败", e);
+			Throwable te = e.getCause();
+			if (te instanceof SQLException) {
+				throw new DaoException("数据库查询失败", e);
+			}
+		}
+		return list;
+	}
+
+	@Override
+	public <E> List<E> selectList(String sql, Map<String, Object> params, Class<E> clazz) {
+		List<E> list = null;
+		try {
+			if (this.decideParam(clazz)) {
+				list = this.namedParameterJdbcTemplate.queryForList(sql, new MapSqlParameterSource(params), clazz);
+			} else {
+				list = this.namedParameterJdbcTemplate.query(sql, new MapSqlParameterSource(params), ParameterizedBeanPropertyRowMapper.newInstance(clazz));
+			}
+		} catch (DataAccessException e) {
+			logger.error(e.getMessage());
+			Throwable te = e.getCause();
+			if (te instanceof SQLException) {
+				throw new DaoException("数据库查询失败", e);
+			}
+		}
+		return list;
+	}
+
+	@Override
+	public Map<String, ?> selectMap(Condition condition) {
+		String sql = SqlUtils.buildSelect(condition);
+		Map<String, Object> map = null;
+		try {
+			map = this.namedParameterJdbcTemplate.queryForMap(sql, new BeanPropertySqlParameterSource(condition.getEntity()));
+		} catch (DataAccessException e) {
+			logger.error(e.getMessage());
+			Throwable te = e.getCause();
+			if (te instanceof SQLException) {
+				throw new DaoException("数据库查询失败", e);
+			}
+		}
+		return map;
+	}
+	
+	@Override
+	public Integer count(Condition condition) {
+		Integer count = 0;
+		String sql = SqlUtils.buildSelect(condition);
+		try {
+			count = this.namedParameterJdbcTemplate.queryForObject(sql, new BeanPropertySqlParameterSource(condition.getEntity()), Integer.class);
+		} catch (DataAccessException e) {
+			logger.error(e.getMessage());
+			Throwable te = e.getCause();
+			if (te instanceof SQLException) {
+				throw new DaoException("数据库统计失败", e);
+			}
 		}
 		return count;
 	}
 
 	@Override
-	public <T extends Object> Map<String, ?> selectMap(T entry, Condition condition) {
-		String sql = SqlUtils.buildSelect(entry, condition);
-		try {
-			return this.namedParameterJdbcTemplate.queryForMap(sql, new BeanPropertySqlParameterSource(entry));
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			throw new DaoException("数据库Map查询失败", e);
-		}
-	}
-
-	@Override
-	public <T extends Object> void batchInsert(T entry, List<?> obj) {
-		String sql = SqlUtils.buildBatchInsert(entry);
+	public <T> void batchInsert(Class<T> clazz, List<T> obj) {
+		String sql = SqlUtils.buildBatchInsert(clazz);
 		try {
 			this.namedParameterJdbcTemplate.batchUpdate(sql, SqlParameterSourceUtils.createBatch(obj.toArray()));
 		} catch (Exception e) {
@@ -184,8 +212,8 @@ public class BaseDaoImpl implements BaseDao {
 	}
 	
 	@Override
-	public <T extends Object> void batchUpdate(T entry, Condition condition, List<?> obj) {
-		String sql = SqlUtils.buildBatchUpdate(entry, condition);
+	public <T> void batchUpdate(Condition condition, List<T> obj) {
+		String sql = SqlUtils.buildBatchUpdate(condition);
 		try {
 			this.namedParameterJdbcTemplate.batchUpdate(sql, SqlParameterSourceUtils.createBatch(obj.toArray()));
 		} catch (Exception e) {
@@ -206,5 +234,7 @@ public class BaseDaoImpl implements BaseDao {
 		}
 		return isBaseParam;
 	}
+	
+	
 	
 }

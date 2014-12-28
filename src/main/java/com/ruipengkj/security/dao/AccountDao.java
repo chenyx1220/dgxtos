@@ -19,6 +19,6 @@ public interface AccountDao extends BaseDao {
 	 * @param accountName
 	 * @return
 	 */
-	List<String> selectAccountRoleByName(String accountName);
+	List<String> selectAccountRolesByName(String accountName);
 
 }

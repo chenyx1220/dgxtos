@@ -1,15 +1,15 @@
 package com.ruipengkj.common.dao;
 
+import java.beans.BeanInfo;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 
+import com.ruipengkj.common.util.ClassUtils;
 import com.ruipengkj.common.util.NameUtils;
 
 /**
@@ -38,7 +38,9 @@ public class SqlUtils {
         }
         
         //获取属性信息
-        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
+        BeanInfo beanInfo = ClassUtils.getSelfBeanInfo(clazz);
+        PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+
         if (pds.length == 0) {
         	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
         }
@@ -71,19 +73,16 @@ public class SqlUtils {
      * @param entity
      * @return
      */
-    public static String buildUpdate(Object entity, Condition condition) {
+    public static String buildUpdate(Condition condition) {
     	StringBuilder sql = new StringBuilder();
     	sql.append("update ");
-        Class<?> clazz = entity.getClass();
-        if (clazz.isAnnotationPresent(Table.class)) { 
-			Table table = (Table) clazz.getAnnotation(Table.class); 
-            sql.append(table.tableName()); 
-        } else {
-        	throw new DaoException("实体类没有注解@Table");
-        }
+    	Object entity = condition.getEntity();
+        Class<?> clazz = condition.getEntityClass();
+        sql.append(condition.getTableName());
         
         //获取属性信息
-        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
+        BeanInfo beanInfo = ClassUtils.getSelfBeanInfo(clazz);
+        PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
         if (pds.length == 0) {
         	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
         }
@@ -110,8 +109,6 @@ public class SqlUtils {
         	for (String expression : expressions) {
         		sql.append(expression);
         	}
-        } else {
-        	sql.append(" where id = :id");
         }
         return sql.toString();
     }
@@ -122,24 +119,16 @@ public class SqlUtils {
      * @param condition
      * @return
      */
-    public static String buildDelete(Object entity, Condition condition) {
+    public static String buildDelete(Condition condition) {
     	StringBuilder sql = new StringBuilder();
     	sql.append("delete from ");
-        Class<?> clazz = entity.getClass();
-        if (clazz.isAnnotationPresent(Table.class)) { 
-			Table table = (Table) clazz.getAnnotation(Table.class); 
-            sql.append(table.tableName()); 
-        } else {
-        	throw new DaoException("实体类没有注解@Table");
-        }
-        if (condition != null && condition.getExpressions().size() > 0) {
+    	sql.append(condition.getTableName()); 
+        if (condition.getExpressions().size() > 0) {
         	sql.append(" where ");
         	List<String> expressions = condition.getConditions();
         	for (String expression : expressions) {
         		sql.append(expression);
         	}
-        } else {
-        	sql.append(" where id = :id");
         }
         return sql.toString();
     }
@@ -150,7 +139,7 @@ public class SqlUtils {
      * @param condition
      * @return
      */
-    public static String buildSelect(Object entity, Condition condition) {
+    public static String buildSelect(Condition condition) {
     	StringBuilder sql = new StringBuilder();
     	sql.append("select ");
     	if (condition != null && condition.getFields().size() > 0) {
@@ -164,21 +153,13 @@ public class SqlUtils {
     		sql.append("*");
     	}
     	sql.append(" from ");
-        Class<?> clazz = entity.getClass();
-        if (clazz.isAnnotationPresent(Table.class)) { 
-			Table table = (Table) clazz.getAnnotation(Table.class); 
-            sql.append(table.tableName()); 
-        } else {
-        	throw new DaoException("实体类没有注解@Table");
-        }
+        sql.append(condition.getTableName());
         if (condition != null && condition.getExpressions().size() > 0) {
         	sql.append(" where ");
         	List<String> expressions = condition.getConditions();
         	for (String expression : expressions) {
         		sql.append(expression);
         	}
-        } else {
-        	sql.append(" where id = :id");
         }
         return sql.toString();
     }
@@ -189,10 +170,9 @@ public class SqlUtils {
      * @param entity 实体映射对象
      * @return
      */
-    public static String buildBatchInsert(Object entity) {
+    public static String buildBatchInsert(Class<?> clazz) {
     	StringBuilder sql = new StringBuilder("insert into ");
     	
-        Class<?> clazz = entity.getClass();
         if (clazz.isAnnotationPresent(Table.class)) { 
 			Table table = (Table) clazz.getAnnotation(Table.class); 
             sql.append(table.tableName()); 
@@ -201,7 +181,9 @@ public class SqlUtils {
         }
         
         //获取属性信息
-        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
+        BeanInfo beanInfo = ClassUtils.getSelfBeanInfo(clazz);
+        PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+        
         if (pds.length == 0) {
         	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
         }
@@ -230,19 +212,16 @@ public class SqlUtils {
      * @param entity
      * @return
      */
-    public static String buildBatchUpdate(Object entity, Condition condition) {
+    public static String buildBatchUpdate(Condition condition) {
     	StringBuilder sql = new StringBuilder();
     	sql.append("update ");
-        Class<?> clazz = entity.getClass();
-        if (clazz.isAnnotationPresent(Table.class)) { 
-			Table table = (Table) clazz.getAnnotation(Table.class); 
-            sql.append(table.tableName()); 
-        } else {
-        	throw new DaoException("实体类没有注解@Table");
-        }
+    	Class<?> clazz = condition.getEntityClass();
+    	sql.append(condition.getTableName()); 
         
         //获取属性信息
-        PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(clazz);
+        BeanInfo beanInfo = ClassUtils.getSelfBeanInfo(clazz);
+        PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+        
         if (pds.length == 0) {
         	throw new DaoException(clazz.getSimpleName() + "-实体没有字段");
         }
@@ -265,8 +244,6 @@ public class SqlUtils {
         	for (String expression : expressions) {
         		sql.append(expression);
         	}
-        } else {
-        	sql.append(" where id = :id");
         }
         return sql.toString();
     }

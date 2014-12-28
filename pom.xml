@@ -75,8 +75,7 @@
 				<configuration>
 					<!-- 设置webapp目录为Web目录 -->
 					<warSourceDirectory>web</warSourceDirectory>
-					<!-- 声明：packagingExcludes中的*.properties文件均位于src/main/resources目录中
-						warSourceExcludes中的?test/*,venue/**位于src/main/webapp目录中 -->
+					<!-- 声明：packagingExcludes中的*.properties文件均位于src/main/resources目录中 warSourceExcludes中的?test/*,venue/**位于src/main/webapp目录中 -->
 					<packagingExcludes>**/logback-test.xml</packagingExcludes>
 					<!-- 包含空目录 -->
 					<includeEmptyDirectories>true</includeEmptyDirectories>
@@ -175,6 +174,11 @@
 			<artifactId>xercesImpl</artifactId>
 			<version>2.11.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>1.6.8</version>
+		</dependency>
 
 		<!-- spring -->
 		<dependency>
@@ -262,7 +266,7 @@
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
 		</dependency>
-		
+
 		<!-- servlet api -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -282,6 +286,18 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>5.1.6</version>
+		</dependency>
+		
+		<!-- proxool -->
+		<dependency>
+			<groupId>proxool</groupId>
+			<artifactId>proxool</artifactId>
+			<version>0.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>proxool-cglib</artifactId>
+			<version>0.9.1</version>
 		</dependency>
 	</dependencies>
 

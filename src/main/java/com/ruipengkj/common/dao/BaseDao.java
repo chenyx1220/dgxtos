@@ -11,7 +11,7 @@ public interface BaseDao {
 	 * @param sql
 	 * @param entry
 	 */
-	<T extends Object> int insert(T entry);
+	<T> int insert(T entry);
 
 	/**
 	 * 条件更新
@@ -20,7 +20,7 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object> int update(T entry, Condition condition);
+	int update(Condition condition);
 
 	/**
 	 * 条件删除
@@ -29,40 +29,16 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object> int delete(T entry, Condition condition);
+	int delete(Condition condition);
 	
-	/**
-	 * 主键删除
-	 * 
-	 * @param sql
-	 * @param id
-	 * @return
-	 */
-	<T extends Object> int deleteByPrimaryKey(T entry);
 	
-	/**
-	 * 主键更新
-	 * 
-	 * @param sql
-	 * @param obj
-	 * @return
-	 */
-	<T extends Object> int updateByPrimaryKey(T entry);
-	
-	/**
-	 * 主键查询
-	 * @param id
-	 * @param clazz
-	 * @return
-	 */
-	<T extends Object, E> E selectByPrimaryKey(T entry, Class<E> clazz);
 	
 	/**
 	 * 统计数量
 	 * @param entry
 	 * @return
 	 */
-	<T extends Object> Integer count(T entry, Condition condition);
+	Integer count(Condition condition);
 
 	/**
 	 * 查询实体列表
@@ -72,7 +48,10 @@ public interface BaseDao {
 	 * @param obj
 	 * @return
 	 */
-	<T extends Object, E> List<E> selectList(T entry, Condition condition, Class<E> clazz);
+	<E> List<E> selectList(Condition condition, Class<E> clazz);
+	
+	<E> List<E> selectList(String sql, Map<String, Object> params, Class<E> clazz);
+	<E> List<E> selectList(String sql, Class<E> clazz);
 
 	/**
 	 * 查询实体
@@ -82,7 +61,7 @@ public interface BaseDao {
 	 * @param objs
 	 * @return
 	 */
-	<T extends Object,E> E selectObject(T entry, Condition condition, Class<E> clazz);
+	<E> E selectObject(Condition condition, Class<E> clazz);
 
 	/**
 	 * 查询一个Map集合
@@ -91,7 +70,7 @@ public interface BaseDao {
 	 * @param objs
 	 * @return
 	 */
-	<T extends Object> Map<String, ?> selectMap(T entry, Condition condition);
+	Map<String, ?> selectMap(Condition condition);
 
 	/**
 	 * 批量添加操作
@@ -99,7 +78,7 @@ public interface BaseDao {
 	 * @param sql
 	 * @param objList
 	 */
-	<T extends Object> void batchInsert(T entry, List<?> objList);
+	<T> void batchInsert(Class<T> clazz, List<T> objList);
 	
 	/**
 	 * 批量更新操作
@@ -107,6 +86,6 @@ public interface BaseDao {
 	 * @param sql
 	 * @param objList
 	 */
-	<T extends Object> void batchUpdate(T entry, Condition condition, List<?> objList);
+	<T> void batchUpdate(Condition condition, List<T> objList);
 
 }
